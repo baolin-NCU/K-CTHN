@@ -10,10 +10,8 @@ import pickle as cPickle
 import tensorflow_model_optimization as tfmot
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 from scipy.stats import moment
-from IQ_and_accumulation.mix_moment.mixd_moment_tf import mixed_moment,self_moments
-from IQ_and_accumulation_4.transformer.MultiHeadAttentionCustom import MultiHeadAttention, TransformerEncoder
-from IQ_and_accumulation_4.flops import get_model_summary,get_flops
-from IQ_and_accumulation_4.accumulation_param.accumulation_param import accumulation_param
+from models.utils.mix_moment.mixd_moment import mixed_moment,self_moments
+from models.utils.transformer.MultiHeadAttentionCustom import MultiHeadAttention, TransformerEncoder
 times_new_roman_path = '/usr/share/fonts/truetype/msttcorefonts/Times_New_Roman.ttf'
 font_manager.fontManager.addfont(times_new_roman_path)
 root_dir = "/home/baolin/PycharmProjects/AFECNN"

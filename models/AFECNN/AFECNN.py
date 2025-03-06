@@ -59,7 +59,8 @@ Y_test = to_onehot(list(map(lambda x: mods.index(lbl[x][0]), test_idx)))
 in_shp = list(X_train.shape[1:])
 print(X_train.shape, in_shp)
 classes = mods
-
+classes[7] = '16QAM'
+classes[8] = '64QAM'
 #AP数据提取，作为人工特征
 filename = f"{root_dir}/data/A_P_data.pickle"
 with open(filename, 'rb') as file:
@@ -169,12 +170,12 @@ transformer_block = TransformerEncoder(num_heads=4, key_dim=32, ff_dim=64, dropo
 b = transformer_block(b, training=True)  # (batch_size, seq_len, key_dim)
 b = transformer_block(b, training=True)  # 可堆叠多个TransformerEncoder块
 b = transformer_block(b, training=True)  # 可堆叠多个TransformerEncoder块
-# output_2 = layers.GlobalMaxPooling1D()(b)
+output_2 = layers.GlobalAveragePooling1D()(b)
 # output_2 = tf.keras.layers.Flatten()(b)
 # # 混合池化
-max_pool = layers.GlobalMaxPooling1D()(b)
-avg_pool = layers.GlobalAveragePooling1D()(b)
-output_2 = layers.concatenate([max_pool, avg_pool])  # (batch_size, key_dim)
+# max_pool = layers.GlobalMaxPooling1D()(b)
+# avg_pool = layers.GlobalAveragePooling1D()(b)
+# output_2 = layers.concatenate([max_pool, avg_pool])  # (batch_size, key_dim)
 second = tf.keras.Model(input_2, output_2, name="second")
 second.summary()
 
@@ -203,7 +204,7 @@ final.summary()
 nb_epoch = 100  # number of epochs to train on
 batch_size = 512  # training batch size
 current_date = datetime.datetime.now().strftime("%-m-%-d")
-save_dir = os.path.join(root_dir,"runs/weights/AFECNN",current_date)
+save_dir = os.path.join(root_dir,"runs/AFECNN",current_date)
 if os.path.exists(save_dir):
     print(f"目录已存在：{save_dir}（将直接使用现有目录）")
 else:
@@ -356,7 +357,7 @@ acc_MCLDNN = {-20:0.09,-18:0.1,-16:0.11,-14:0.13,-12:0.18,-10:0.275,-8:0.42,-6:0
            -4:0.67,-2:0.79,0:0.88,2:0.898,4:0.922,6:0.91,8:0.92,10:0.92,12:0.918,14:0.919,16:0.915,18:0.918}
 acc_MCL_BigNetNN = {-20:0.1,-18:0.12,-16:0.12,-14:0.15,-12:0.17,-10:0.28,-8:0.472,-6:0.58,
            -4:0.68,-2:0.852,0:0.893,2:0.915,4:0.92,6:0.921,8:0.922,10:0.94,12:0.938,14:0.945,16:0.939,18:0.933}
-with open(f"{root_dir}/runs/results/AFECNN/acc_trend.dat", 'wb') as file:
+with open(f"{root_dir}/runs/AFECNN/acc_trend.dat", 'wb') as file:
     cPickle.dump(acc, file)
 
 
