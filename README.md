@@ -14,7 +14,7 @@ pip3 install -r requirements.txt
 
 ## Training Pipeline
 We evaluated our approach on three datasets. [RML2016.10A](https://opendata.deepsig.io/datasets/2016.10/RML2016.10a.tar.bz), 
-[RML2016.10C]([https://www.garrickorchard.com/datasets/n-caltech101](https://opendata.deepsig.io/datasets/2016.04/2016.04C.multisnr.tar.bz)
+[RML2016.10C](https://opendata.deepsig.io/datasets/2016.04/2016.04C.multisnr.tar.bz)
 Download them and extract them. By default, they are assumed to be in `/data/`
 
 ### Training
