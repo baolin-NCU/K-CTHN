@@ -10,12 +10,11 @@ import pickle as cPickle
 import tensorflow_model_optimization as tfmot
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 from scipy.stats import moment
-from IQ_and_accumulation.mix_moment.mixd_moment import mixed_moment,self_moments
-from IQ_and_accumulation_4.accumulation_param.accumulation_param import accumulation_param
-from IQ_and_accumulation_4.transformer.MultiHeadAttentionCustom import MultiHeadAttention, TransformerEncoder
+from models.utils.mix_moment.mixd_moment import mixed_moment,self_moments
+from models.utils.transformer.MultiHeadAttentionCustom import MultiHeadAttention, TransformerEncoder
 times_new_roman_path = '/usr/share/fonts/truetype/msttcorefonts/Times_New_Roman.ttf'
 font_manager.fontManager.addfont(times_new_roman_path)
-root_dir = "/home/baolin/PycharmProjects/LM-AFECNN"
+root_dir = "/home/baolin/PycharmProjects/AFECNN"
 
 plt.rcParams['font.family'] = 'Times New Roman'
 print("Num GPUs Available: ", len(tf.config.experimental.list_physical_devices('GPU')))
@@ -137,10 +136,6 @@ M_5 = [np.abs(c63 / c21**3) for c63, c21 in zip(C_63,C_21)]
 M_6 = [np.abs(c80 / c21**4) for c80, c21 in zip(C_80,C_21)]
 extraData = [Param_R,np.real(M_1),np.imag(M_1),M_2,
              np.real(M_3),np.imag(M_3),M_4,M_5,M_6,np.real(C_60),np.imag(C_60)]
-SSB_indexes = [index for index, (first, _) in enumerate(lbl) if first == 'AM-SSB']
-for sublist in extraData:
-    for i in SSB_indexes:
-        sublist[i] = sublist[i+140000]
 #将子列表转换成np数组利于转换为二维
 extraData_same = [np.array(item).flatten() for item in extraData]
 # 将所有子数组堆叠为一个二维数组
@@ -187,19 +182,19 @@ transformer_block = TransformerEncoder(num_heads=4, key_dim=32, ff_dim=64, dropo
 b = transformer_block(b, training=True)  # (batch_size, seq_len, key_dim)
 b = transformer_block(b, training=True)  # 可堆叠多个TransformerEncoder块
 b = transformer_block(b, training=True)  # 可堆叠多个TransformerEncoder块
-# output_2 = layers.GlobalMaxPooling1D()(b)
+output_2 = layers.GlobalAveragePooling1D()(b)
 # output_2 = tf.keras.layers.Flatten()(b)
 # # 混合池化
-max_pool = layers.GlobalMaxPooling1D()(b)
-avg_pool = layers.GlobalAveragePooling1D()(b)
-output_2 = layers.concatenate([max_pool, avg_pool])  # (batch_size, key_dim)
+# max_pool = layers.GlobalMaxPooling1D()(b)
+# avg_pool = layers.GlobalAveragePooling1D()(b)
+# output_2 = layers.concatenate([max_pool, avg_pool])  # (batch_size, key_dim)
 second = tf.keras.Model(input_2, output_2, name="second")
 second.summary()
 
 #两个网络相连接
 concate = tf.keras.layers.Concatenate()([extra_Param, output_2])
 print(concate.shape)
-concate = tf.keras.layers.Dense(256, activation='relu', kernel_initializer='he_normal', name="dense")(concate)
+concate = tf.keras.layers.Dense(128, activation='relu', kernel_initializer='he_normal', name="dense")(concate)
 concate = tf.keras.layers.Dropout(dr)(concate)
 print(concate.shape)
 concate = tf.keras.layers.Dense(len(classes), kernel_initializer='he_normal', name='dense2')(concate)
@@ -212,7 +207,7 @@ final.summary()
 batch_size = 512
 nb_epoch = 30
 current_date = datetime.datetime.now().strftime("%-m-%-d")
-save_dir = os.path.join(root_dir,"runs/weights/ArF-AMC",current_date)
+save_dir = os.path.join(root_dir,"runs/LM-AFECNN",current_date)
 if os.path.exists(save_dir):
     print(f"目录已存在：{save_dir}（将直接使用现有目录）")
 else:
@@ -228,19 +223,27 @@ num_steps = np.ceil(len(X_train) / batch_size).astype(np.int32) * nb_epoch
 filepath3 = os.path.join(save_dir,"weights.wts.h5")
 pruning_params = {
     'pruning_schedule': tfmot.sparsity.keras.PolynomialDecay(
-        initial_sparsity=0,
-        final_sparsity=0.7,
-        begin_step=0,
-        end_step=num_steps,
+        initial_sparsity=0.1,  # 初始稀疏度从10%开始
+        final_sparsity=0.7,    # 最终稀疏度70%
+        begin_step=int(num_steps * 0.1),  # 前10%步数作为warmup
+        end_step=int(num_steps * 0.9),    # 后10%步数保持稳定
         frequency=100,
-    )
+        power=3  # 使用立方衰减加速后期剪枝
+    ),
+    'block_size': (1, 1),  # 结构化剪枝块大小
+    'block_pooling_type': 'AVG'  # 块内平均池化
 }
 # 对模型进行剪枝包装
+# 对模型进行剪枝包装
 def apply_pruning_to_layers(layer):
-    if isinstance(layer, tf.keras.layers.Dense) or isinstance(layer, tf.keras.layers.Conv2D) or isinstance(layer, tf.keras.layers.Convolution2D):
+    if isinstance(layer, (tf.keras.layers.Dense,
+                          tf.keras.layers.Conv2D,
+                          tf.keras.layers.DepthwiseConv2D,
+                          tf.keras.layers.Conv2DTranspose)):
         return tfmot.sparsity.keras.prune_low_magnitude(layer, **pruning_params)
     return layer
 
+# 克隆并应用剪枝
 final_pruned = tf.keras.models.clone_model(
     final,
     clone_function=apply_pruning_to_layers,
@@ -255,14 +258,8 @@ callbacks = [
     tfmot.sparsity.keras.UpdatePruningStep(),
     tf.keras.callbacks.ModelCheckpoint(filepath3, monitor='val_loss', verbose=0, save_best_only=True, mode='auto'),
     tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=5, verbose=0, mode='auto')
-    # tf.keras.callbacks.LambdaCallback(
-    #     on_epoch_end=lambda epoch, logs: print(
-    #         f"Sparsity after epoch {epoch}: {tfmot.sparsity.keras.strip_pruning(final_pruned).count_params()}"
-    #     )
-    # )
 ]
 
-# 训练模型
 history3 = final_pruned.fit(
     [extraData_train_tf, X_train],
     Y_train,
@@ -273,35 +270,38 @@ history3 = final_pruned.fit(
     callbacks=callbacks
 )
 
-# 去除剪枝占位符并保存模型
+
+# 去除剪枝标记
 model_for_export = tfmot.sparsity.keras.strip_pruning(final_pruned)
 model_for_export.save('pruned_model.h5')
 model_for_export.summary()
-# 统计剪枝后模型的参数量
+
+# 统计参数
 pruned_params = model_for_export.count_params()
+print(f"Total parameters after pruning (结构未减少，但部分参数稀疏化): {pruned_params}")
 
-print(f"Total parameters after pruning: {pruned_params}")
+
+from keras_flops import get_flops
+
+flops = get_flops(
+    model_for_export,
+    batch_size=1  # 设置批大小为1，便于标准化 FLOPs 计算
+)
+
+print(f"Total FLOPs: {flops / 10 ** 9:.03f} GFLOPs")
+
+# 保存 FLOPs 信息
+flops_log_path = os.path.join(save_dir, "model_stats.log")
+with open(flops_log_path, "w") as f:
+    f.write(f"Pruned Model Parameters: {pruned_params}\n")
+    f.write(f"Total FLOPs: {flops / 10 ** 9:.03f} GFLOPs\n")
 
 
-# # Set up some params
-# history3 = final.fit([extraData_train_tf, X_train],                         #训练数据
-#                     Y_train,                         #训练数据对应的标签
-#                     batch_size=batch_size,           #训练批量大小，每次训练时使用的样本数
-#                     epochs=nb_epoch,                 #训练轮数，表示模型需要训练的次数
-#                     #show_accuracy=False,            #表示不显示训练过程中的准确率
-#                     verbose=2,                       #表示在训练过程中显示详细信息
-#                     validation_data=([extraData_test_tf, X_test],Y_test), #使用测试数据X_test和标签Y_text进行模型的验证
-#                     callbacks = [                    #回调函数，用于在每个训练轮数结束时保存模型的权重
-#                         tf.keras.callbacks.ModelCheckpoint(filepath3, monitor='val_loss', verbose=0, save_best_only=True, mode='auto'),#filepath是保存模型权重的路径
-#                         tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=5, verbose=0, mode='auto')#回调函数，用于在验证集上损失函数不再下降时停止训练，5次迭代都没有改进时停止训练
-#                     ])
-# print ("训练已经完成，最佳权重模型已保存到根目录！正在加载最佳权重模型....")
-model_for_export.load_weights('pruned_model.h5')
-print ("最佳模型加载成功！")
 model_for_export.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
 score = model_for_export.evaluate([extraData_test_tf, X_test], Y_test, verbose=0, batch_size=batch_size)
 print("Loss: ", score[0])
 print("Accuracy: ", score[1])
+
 
 
 # with open('history.json', 'w') as f:
@@ -609,10 +609,10 @@ plt.yticks(np.arange(0, 1.01, 0.05))
 plt.ylim([0, 1.0])  # 设置 y 轴的限制从 0 开始
 for mod in classes:
     plt.plot(snrs, [snr_accuracy[snr][mod] for snr in snrs], marker='o', label=mod)
-plt.xlabel('Signal to Noise Ratio (SNR)')
-plt.ylabel('Classification Accuracy')
-plt.title('Accuracy by Modulation Scheme')
+plt.xlabel('Signal to Noise Ratio (SNR)',fontsize=12)
+plt.ylabel('Classification Accuracy',fontsize=12)
+plt.title('Accuracy by Modulation Scheme',fontsize=12)
 plt.grid(True)
-plt.legend()
+plt.legend(fontsize=10)
 plt.show()
 plt.savefig(f"{save_dir}/acc_trend_for_all_styles.png", format='png', dpi=1200)  # 设置 dpi 参数以调整保存的图像质量
