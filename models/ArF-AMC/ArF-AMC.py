@@ -8,12 +8,12 @@ import matplotlib.pyplot as plt
 import pickle as cPickle
 from matplotlib import font_manager
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
-from IQ_and_accumulation.mix_moment.mixd_moment import mixed_moment,self_moments
+from models.utils.mix_moment.mixd_moment import mixed_moment,self_moments
 from tensorflow.keras.layers import Reshape,Dense,Dropout,Activation
 times_new_roman_path = '/usr/share/fonts/truetype/msttcorefonts/Times_New_Roman.ttf'
 font_manager.fontManager.addfont(times_new_roman_path)
 plt.rcParams['font.family'] = 'Times New Roman'
-root_dir = "/home/baolin/PycharmProjects/ArF-AMC"
+root_dir = "/home/baolin/PycharmProjects/AFECNN"
 
 print("Num GPUs Available: ", len(tf.config.experimental.list_physical_devices('GPU')))
 # Load the dataset ...
@@ -150,7 +150,7 @@ model.summary()
 nb_epoch = 100     # number of epochs to train on
 batch_size = 512  # training batch size
 current_date = datetime.datetime.now().strftime("%-m-%-d")
-save_dir = os.path.join(root_dir,"runs/weights/ArF-AMC",current_date)
+save_dir = os.path.join(root_dir,"runs/ArF-AMC",current_date)
 if os.path.exists(save_dir):
     print(f"目录已存在：{save_dir}（将直接使用现有目录）")
 else:
