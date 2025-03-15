@@ -508,13 +508,6 @@ ax_sub.grid(True)
 ax_sub.tick_params(labelsize=8)
 plt.savefig(f"{save_dir}/acc_trend.png", format='png', dpi=1200)  # 设置 dpi 参数以调整保存的图像质量
 
-snr_accuracy[-4]['8PSK'] =0.83
-snr_accuracy[0]['8PSK'] =0.95
-snr_accuracy[-4]['BPSK'] =0.88
-snr_accuracy[0]['BPSK'] =0.93
-snr_accuracy[-4]['QAM64'] =0.953
-snr_accuracy[18]['AM-SSB'] =0.9005
-snr_accuracy[18]['QAM16'] =0.9505
 
 plt.figure()
 plt.yticks(np.arange(0, 1.01, 0.05))
