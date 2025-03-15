@@ -341,8 +341,6 @@ acc_MCL_BigNetNN = {-20:0.1,-18:0.12,-16:0.12,-14:0.15,-12:0.17,-10:0.28,-8:0.47
 with open(f"{save_dir}/acc_trend.dat", 'wb') as file:
     cPickle.dump(acc, file)
 
-acc[-4] = 0.9511
-acc[18] = 0.982
 
 plt.figure()
 plt.yticks(np.arange(0, 1.01, 0.05))
@@ -490,13 +488,7 @@ ax_sub.grid(True)
 ax_sub.tick_params(labelsize=8)
 plt.savefig(f"{save_dir}/acc_trend.png", format='png', dpi=1200)  # 设置 dpi 参数以调整保存的图像质量
 
-snr_accuracy[-4]['8PSK'] =0.83
-snr_accuracy[0]['8PSK'] =0.95
-snr_accuracy[-4]['BPSK'] =0.88
-snr_accuracy[0]['BPSK'] =0.93
-snr_accuracy[-4]['QAM64'] =0.953
-snr_accuracy[18]['AM-SSB'] =0.9005
-snr_accuracy[18]['QAM16'] =0.9505
+
 plt.figure()
 plt.yticks(np.arange(0, 1.01, 0.05))
 plt.ylim([0, 1.0])  # 设置 y 轴的限制从 0 开始
