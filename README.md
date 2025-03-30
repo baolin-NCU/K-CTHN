@@ -33,7 +33,7 @@ NCars dataset, you can use:
 ```
 python3 AFECNN/evaluation/flops.py 
 ```
-
+Inaddition, there is a separate flops calculation step in the training file, 
 
 ## Contributing
 If you spot any bugs or if you are planning to contribute back bug-fixes, please open an issue and
