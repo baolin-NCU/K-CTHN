@@ -1,5 +1,5 @@
 # K-CTHN: Knowledge Embedded Convolutional-Transformer Hybrid Network 
-This repository contains the code for the automatic modulation classification
+This repository contains the code for the automatic modulation classification, The initial name of the model is Artificial Feature enhanced Convolutional Neural Network(AFECNN), so the folder is named like this.
 
 
 ## Installation
@@ -21,7 +21,7 @@ Download them and extract them. By default, they are assumed to be in `/data/`
 We use different optimization models for training. Various models can be found in the models folder.
 Training and evaluation can be performed at the same time, and the results are stored in the runs folder.
 ```
-python3 K-CTHN/models/[model_name]/[model.py]
+python3 AFECNN/models/[model_name]/[model.py]
 ```
 
 
@@ -31,7 +31,7 @@ We support automatic flops and runtime analysis, by using hooking each layer's f
 batch normalization are supported. As an example, to run an analysis of our model on the 
 NCars dataset, you can use:
 ```
-python3 K-CTHN/evaluation/flops.py 
+python3 AFECNN/evaluation/flops.py 
 ```
 Inaddition, there is a separate flops calculation step in the training file, 
 
