@@ -1,5 +1,5 @@
 # K-CTHN: Knowledge Embedded Convolutional-Transformer Hybrid Network 
-This repository contains the code for the automatic modulation classification, we inintial named the model Artificial Feature enhanced Convolutional Neural Network(AFECNN), so the folder is named like this.
+This repository contains the code for the automatic modulation classification, we initially named the model Artificial Feature enhanced Convolutional Neural Network(AFECNN), so the folder is named like this.
 
 
 ## Installation
