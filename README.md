@@ -26,10 +26,8 @@ python3 AFECNN/models/[model_name]/[model.py]
 
 
 ## Evaluation
-We support automatic flops and runtime analysis, by using hooking each layer's forward pass. Similar to the 
-`make_model_asynchronous()` function, among other, all graph-based convolutional layers, the linear layer and 
-batch normalization are supported. As an example, to run an analysis of our model on the 
-NCars dataset, you can use:
+We support automatic flops and runtime analysis for all  convolutional layers, the linear layer and 
+batch normalization. As an example, to run an analysis of our model, you can use:
 ```
 python3 AFECNN/evaluation/flops.py 
 ```
