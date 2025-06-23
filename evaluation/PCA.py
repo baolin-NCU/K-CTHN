@@ -1,4 +1,5 @@
 import tensorflow as tf
+import random
 from tensorflow.keras import layers
 import os, time, datetime
 os.environ["KERAS_BACKEND"] = "tensorflow"
@@ -205,30 +206,34 @@ final = tf.keras.Model(inputs=[extra_Param, input_2], outputs=output)
 final.compile(loss='categorical_crossentropy', optimizer=optimizer, metrics=['accuracy'])
 final.summary()
 
+
 nb_epoch = 100  # number of epochs to train on
 batch_size = 512  # training batch size
 final.load_weights("/home/baolin/PycharmProjects/AFECNN/weights.wts.h5")
 
 # 融合特征评估
-# intermediate_layer_model = tf.keras.Model(
-#     inputs=final.input,
-#     outputs=final.get_layer('global_average_pooling1d').output  # 替换为你实际的层名
-# )
-# deep_features_train = intermediate_layer_model.predict([extraData_train_tf, X_train])
-# deep_features_test = intermediate_layer_model.predict([extraData_test_tf, X_test])
-# combined_features_train = np.concatenate([deep_features_train, extraData_train], axis=1)
-# combined_features_test = np.concatenate([deep_features_test, extraData_test], axis=1)
-# scaler = StandardScaler()
-# combined_features_train_scaled = scaler.fit_transform(combined_features_train)
-# pca = PCA()
-# X_pca = pca.fit_transform(combined_features_train_scaled)
+intermediate_layer_model = tf.keras.Model(
+    inputs=final.input,
+    outputs=final.get_layer('global_average_pooling1d').output  # 替换为你实际的层名
+)
+deep_features_train = intermediate_layer_model.predict([extraData_train_tf, X_train])
+deep_features_test = intermediate_layer_model.predict([extraData_test_tf, X_test])
+combined_features_train = np.concatenate([deep_features_train, extraData_train], axis=1)
+combined_features_test = np.concatenate([deep_features_test, extraData_test], axis=1)
+scaler = StandardScaler()
+combined_features_train_scaled = scaler.fit_transform(combined_features_train)
+deep_features_train_scaled = scaler.fit_transform(deep_features_train)
+pca = PCA()
+X_pca = pca.fit_transform(deep_features_train_scaled)
+# # #deep_features
+# X_pca = pca.fit_transform(deep_features_train_scaled)
 
 #人工特征评估
 scaler = StandardScaler()
 artificial_feature_scaler = scaler.fit_transform(extraData_train)
-pca = PCA()
+#pca = PCA()
 X_pca = pca.fit_transform(artificial_feature_scaler)
-class_qam = ['QAM16','QAM64','WBFM']
+class_qam = ['QAM16','QAM64','WBFM',"AM-SSB"]
 classes[7] = 'QAM16'
 classes[8] = 'QAM64'
 plt.figure(figsize=(10, 8))
@@ -245,27 +250,41 @@ plt.show()
 tsne = TSNE(n_components=2, random_state=42, perplexity=30)
 X_tsne = tsne.fit_transform(artificial_feature_scaler)
 plt.figure(figsize=(12,8))
-for mod in classes:
-    if mod == "QAM16":
-        mod_mask = [lbl[i][0] == mod for i in train_idx]
-        plt.scatter(X_tsne[mod_mask, 0], X_tsne[mod_mask, 1], label="16QAM", s=2)
-    elif mod == "QAM64":
-        mod_mask = [lbl[i][0] == mod for i in train_idx]
-        plt.scatter(X_tsne[mod_mask, 0], X_tsne[mod_mask, 1], label="64QAM", s=2)
-    else:
-        mod_mask = [lbl[i][0] == mod for i in train_idx]
-        plt.scatter(X_tsne[mod_mask, 0], X_tsne[mod_mask, 1], label=mod, s=2)
-plt.legend()
+max_points_per_class = 5000  # 控制每类最多画多少点
+
+# 确保 train_idx 是 list
+train_idx_list = train_idx.tolist() if isinstance(train_idx, np.ndarray) else train_idx
+
+for mod in class_qam:
+    mod_indices = [i for i in train_idx if lbl[i][0] == mod]
+
+    # 随机采样
+    if len(mod_indices) > max_points_per_class:
+        mod_indices = random.sample(mod_indices, max_points_per_class)
+
+    # 映射到降维后的坐标
+    mod_mask = [train_idx_list.index(i) for i in mod_indices]
+
+    label_name = "16QAM" if mod == "QAM16" else ("64QAM" if mod == "QAM64" else mod)
+    plt.scatter(X_tsne[mod_mask, 0], X_tsne[mod_mask, 1], label=label_name, s=2)
+
+# 设置坐标轴标签和字体大小
+plt.xlabel("t-SNE Component 1", fontsize=14)
+plt.ylabel("t-SNE Component 2", fontsize=14)
+plt.legend(markerscale=5, fontsize=14, prop={'family': 'Times New Roman'})
 plt.title('')
+# 设置刻度字体大小
+plt.xticks(fontsize=14)
+plt.yticks(fontsize=14)
 plt.show()
-plt.savefig(f"./t-SNE_of_artificial_features_all.png", format='png', dpi=1200,bbox_inches='tight')
+plt.savefig(f"./t-SNE_of_combined_features_part.png", format='png', dpi=1200,bbox_inches='tight')
 
 
 def feature_correlation_analysis(extraData_train, classes, train_idx, lbl):
     """Analyze correlations between features and modulation types"""
     # Create DataFrame with features and modulation types
-    feature_names = ['Param_R', 'M_1_real', 'M_1_imag', 'M_2', 'M_3_real', 'M_3_imag',
-                     'M_4', 'M_5', 'M_6', 'C_60_real', 'C_60_imag']
+    feature_names = ['M_1', 'M_2', 'M_3', 'M_4', 'M_5', 'M_6',
+                     'M_7', 'M_8', 'M_9', 'M_10', 'M_11']
     df = pd.DataFrame(extraData_train, columns=feature_names)
     df['modulation'] = [lbl[i][0] for i in train_idx]
 
@@ -274,10 +293,29 @@ def feature_correlation_analysis(extraData_train, classes, train_idx, lbl):
 
     # Plot correlation heatmap
     plt.figure(figsize=(12, 10))
-    sns.heatmap(corr_matrix, annot=True, cmap='coolwarm', center=0)
-    plt.title('Feature Correlation Matrix')
-    plt.tight_layout()
-    plt.savefig('feature_correlation.png')
+    axis_font = {'fontname': 'Times New Roman', 'size': 16}
+
+    # 绘制热力图，统一字体设置
+    sns.heatmap(
+        corr_matrix,
+        annot=True,
+        cmap='coolwarm',
+        center=0,
+        annot_kws={'size': 16, 'fontname': 'Times New Roman'},
+        cbar_kws={'shrink': 0.8}
+    )
+
+    # 设置标题和标签字体
+    plt.title('Feature Correlation Matrix', **axis_font)
+    plt.xticks(fontsize=16, fontname='Times New Roman', rotation=45)
+    plt.yticks(fontsize=16, fontname='Times New Roman', rotation=0)
+    # 设置 colorbar 刻度字体大小
+    cbar = plt.gca().collections[0].colorbar
+    cbar.ax.tick_params(labelsize=16)
+    plt.tight_layout(pad=2.0)
+    plt.savefig('feature_correlation.png', format='png', dpi=1200, bbox_inches='tight')
+    plt.show()
+
 
     # Calculate feature-modulation correlations
     mod_correlations = {}
@@ -304,13 +342,14 @@ def pca_analysis(extraData_train, classes, train_idx, lbl):
 
     # Plot explained variance
     plt.figure(figsize=(10, 6))
+    axis_font = {'fontname': 'Times New Roman', 'size': 14}
     plt.plot(range(1, len(explained_variance_ratio) + 1),
              cumulative_variance_ratio, 'bo-')
-    plt.xlabel('Number of Components')
-    plt.ylabel('Cumulative Explained Variance Ratio')
+    plt.xlabel('Number of Components',**axis_font)
+    plt.ylabel('Cumulative Explained Variance Ratio',**axis_font)
     plt.title('PCA Explained Variance')
     plt.grid(True)
-    plt.savefig('pca_variance.png')
+    plt.savefig('pca_variance.png',format='png',dpi=1200)
 
     # Plot first two principal components
     plt.figure(figsize=(12, 8))
@@ -318,12 +357,12 @@ def pca_analysis(extraData_train, classes, train_idx, lbl):
     for mod in class_qam:
         mod_mask = [lbl[i][0] == mod for i in train_idx]
         plt.scatter(X_pca[mod_mask, 0], X_pca[mod_mask, 1], label=mod,s=5)
-    plt.xlabel('First Principal Component')
-    plt.ylabel('Second Principal Component')
+    plt.xlabel('First Principal Component',**axis_font)
+    plt.ylabel('Second Principal Component',**axis_font)
     plt.title('PCA of Artificial Features')
     plt.legend()
     plt.grid(True)
-    plt.savefig('pca_scatter.png')
+    plt.savefig('pca_scatter.png', format='png',dpi=1200)
 
     return pca, X_pca
 
