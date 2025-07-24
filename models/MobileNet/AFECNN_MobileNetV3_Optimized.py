@@ -72,13 +72,20 @@ classes[7] = '16QAM'
 classes[8] = '64QAM'
 
 # Artificial features extraction (same as original)
-filename = f"{root_dir}/data/A_P_data.pickle"
-with open(filename, 'rb') as file:
-    M = cPickle.load(file)
-
 Param_R = np.zeros(n_examples)
 for i in range(n_examples):
-    Param_R[i] = np.max(M[i][0])/np.min(M[i][0])
+    # 从I/Q数据计算幅度和相位
+    I_data = X[i][0]  # 同相分量
+    Q_data = X[i][1]  # 正交分量
+
+    # 计算幅度（模长）
+    amplitude = np.sqrt(I_data ** 2 + Q_data ** 2)
+
+    # 计算最大/最小幅度比作为特征
+    if np.min(amplitude) > 0:
+        Param_R[i] = np.max(amplitude) / np.min(amplitude)
+    else:
+        Param_R[i] = 1.0  # 如果最小幅度为零，则使用默认值
 
 comp_data_all = []
 comp_data = np.zeros(X[0].shape[1])
