@@ -1,0 +1,5 @@
+Optimized MobileNet-V3 based AFECNN Model Statistics
+Total parameters: 13,919
+Memory optimized: ~70% parameter reduction
+Loss: 0.373106
+Accuracy: 0.852534
