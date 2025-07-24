@@ -530,8 +530,6 @@ ResNet_100 = {-20:9.76528523500906 , -18:10.5313617903459 , -16:10.7912549294025
 2:93.4816132470947 , 4: 93.614241149965, 6:93.6205193938879 , 8:93.7531472967582,10:94.5194854455918,  12:93.6387001419145 , 14:94.4050382907481 , 16:94.4115781281677 , 18:95.0510434310603}
 ResNet = dict(map(lambda item: (item[0], item[1]/100),ResNet_100.items()))
 acc_AFECNN = {-20: 0.7222772277227723, -18: 0.6500866122246969, -16: 0.7015746063484128, -14: 0.7389788293897883, -12: 0.6882855706385118, -10: 0.7831295843520782, -8: 0.8098964907851552, -6: 0.9522842639593908, -4: 0.9526448362720403, -2: 0.9862431215607804, 0: 0.9872116349047142, 2: 0.9850025419420437, 4: 0.9820301659125189, 6: 0.9911198815984213, 8: 0.9883835887296095, 10: 0.9862189927336508, 12: 0.9880893300248139, 14: 0.9844961240310077, 16: 0.9899497487437185, 18: 0.9820978315683309}
-acc={-20: 0.7282178217821782,-18: 0.6585003711952487,-16: 0.7105723569107723,-14: 0.7479452054794521,-12: 0.7008547008547008,-10: 0.7735941320293398,-8: 0.8098964907851552,-6: 0.9459390862944163,-4: 0.9534005037783375,-2: 0.9879939969984992,0: 0.9864593781344032,2: 0.9842399593289273,4: 0.9867621920563097,6: 0.9925999013320178,8: 0.9901136925358379,10: 0.9887246304184415,12: 0.988833746898263,14: 0.9844961240310077,16: 0.9904522613065326,18: 0.9838628340897629}
-
 
 
 plt.figure()
@@ -681,27 +679,3 @@ plt.grid(True)
 plt.legend(fontsize=10)
 plt.show()
 plt.savefig(f"{save_dir}/acc_trend.png", format='png', dpi=1200)  # 设置 dpi 参数以调整保存的图像质量
-
-# 添加在strip_pruning之后
-def convert_to_sparse_model(model):
-    """将模型中的权重转换为稀疏表示"""
-    # 这需要根据你的部署环境自定义实现
-    # TensorFlow Lite支持稀疏推理
-    converter = tf.lite.TFLiteConverter.from_keras_model(model)
-    converter.optimizations = [tf.lite.Optimize.DEFAULT]
-    converter.target_spec.supported_ops = [tf.lite.OpsSet.TFLITE_BUILTINS_INT8]
-    sparse_tflite_model = converter.convert()
-    return sparse_tflite_model
-
-def count_zero_weights(model):
-    zero_weights = 0
-    total_weights = 0
-    for layer in model.layers:
-        if hasattr(layer, 'kernel'):
-            kernel = layer.kernel.numpy()
-            zero_weights += np.sum(kernel == 0)
-            total_weights += kernel.size
-    return zero_weights, total_weights, zero_weights/total_weights
-
-zero_weights, total_weights, sparsity = count_zero_weights(model_for_export)
-print(f"Zero weights: {zero_weights}/{total_weights} ({sparsity:.2%})")
