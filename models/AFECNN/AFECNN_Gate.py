@@ -71,7 +71,7 @@ for i in range(n_examples):
     # 从I/Q数据计算幅度和相位
     I_data = X[i][0]  # 同相分量
     Q_data = X[i][1]  # 正交分量
-
+Param_R = []
     # 计算幅度（模长）
     amplitude = np.sqrt(I_data ** 2 + Q_data ** 2)
 
