@@ -59,15 +59,12 @@ def to_onehot(yy):
 
 Y_train = to_onehot(list(map(lambda x: mods.index(lbl[x][0]), train_idx)))
 Y_test = to_onehot(list(map(lambda x: mods.index(lbl[x][0]), test_idx)))
-
+Param_R = []
 #   从训练数据中提取应该输入的形状并打印出来
 in_shp = list(X_train.shape[1:])
 print(X_train.shape, in_shp)
 classes = mods
-classes[7] = '16QAM'
-classes[8] = '64QAM'
 #AP数据提取，作为人工特征
-Param_R = np.zeros(n_examples)
 for i in range(n_examples):
     # 从I/Q数据计算幅度和相位
     I_data = X[i][0]  # 同相分量
@@ -78,9 +75,9 @@ for i in range(n_examples):
 
     # 计算最大/最小幅度比作为特征
     if np.min(amplitude) > 0:
-        Param_R[i] = np.max(amplitude) / np.min(amplitude)
+        Param_R.append(np.max(amplitude) / np.min(amplitude))
     else:
-        Param_R[i] = 1.0  # 如果最小幅度为零，则使用默认值
+        Param_R.append(1.0)
 # 以1到8阶矩作为特征参数
 # 先计算出复随机变量的混合矩
 comp_data_all = []
