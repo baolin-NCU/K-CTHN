@@ -12,6 +12,7 @@ conda activate afecnn
 pip3 install -r requirements.txt
 ```
 ## Citation
+If this work is useful for your research, please consider citing:
 ```
 @ARTICLE{11143389,
   author={Wang, Zhenghai and Lai, Baolin and Liu, Xiaodong and Feng, Ziyi and Xiao, Lei and Zhou, Fuhui},
