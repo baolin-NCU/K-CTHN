@@ -11,6 +11,17 @@ conda create -n afecnn python=3.8
 conda activate afecnn
 pip3 install -r requirements.txt
 ```
+## Citation
+@ARTICLE{11143389,
+  author={Wang, Zhenghai and Lai, Baolin and Liu, Xiaodong and Feng, Ziyi and Xiao, Lei and Zhou, Fuhui},
+  journal={IEEE Transactions on Cognitive Communications and Networking}, 
+  title={Knowledge Embedded Convolutional Transformer Hybrid Network for Automatic Modulation Classification}, 
+  year={2025},
+  volume={},
+  number={},
+  pages={1-1},
+  keywords={Feature extraction;Modulation;Accuracy;Signal to noise ratio;Convolutional neural networks;Convolution;Transformers;Quadrature amplitude modulation;Data mining;Adaptation models;Automatic modulation classification;deep learning;artificial features;knowledge-driven;pruning strategy},
+  doi={10.1109/TCCN.2025.3603714}}
 
 ## Training Pipeline
 We evaluated our approach on three datasets. [RML2016.10A](https://opendata.deepsig.io/datasets/2016.10/RML2016.10a.tar.bz), 
